@@ -35,18 +35,18 @@ with tab1:
     example_counts.reset_index(inplace=True, names='gene_id')
     example_metadata.reset_index(inplace=True, names='sample_id')
 
-    st.write(example_counts.head(4))
-    st.write(example_metadata.head(4))
+    st.write(example_counts.head(5))
+    st.write(example_metadata.head(5))
 
 with tab2:
     counts_data = st.sidebar.file_uploader(label="Load counts data in CSV format")
-    meta_data = st.sidebar.file_uploader(label="Load a file for metadata in CVS format")
+    meta_data = st.sidebar.file_uploader(label="Load a file for metadata in CSV format")
     if counts_data is not None and meta_data is not None:
         counts_df, meta_df = load_data(counts_input=counts_data, meta_input=meta_data)
         st.write('Please have a look at the first 5 rows of your dataset below and verify if they are loaded properly.')
-        st.write('Here are your counts data')
+        st.write('Here are your counts data.')
         st.write(counts_df.head(5))
-        st.write('Here are you meta data')
+        st.write('Here are you meta data.')
         st.write(meta_df.head(5))
     else:
         st.stop()
