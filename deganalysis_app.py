@@ -3,18 +3,23 @@ from pydeseq2.utils import load_example_data
 import plotly.express as px
 from utils import load_data, perform_pca, perform_deg
 st.set_page_config(layout='wide')
-st.write('NB: Please this is still under development and improvement!!!')
-st.title(':blue[Differential expression analysis Tool]')
+st.title(':red[Differential expression analysis Toolkit]')
 st.subheader('Perform differential gene expression without writing code.')
 tab1, tab2, tab3, tab4 = st.tabs(['Home', 'Load Data', 'PCA', 'DEG'])
 
 
 with tab1:
-    st.write("""To perform your DEG analysis, we require two datasets.\n
-    1. Counts dataset has the raw counts obtained from mapping using a tool like kallisto. NB: rows=sample, columns=genes
+    st.write("""\n
+    To perform your DEG analysis, we require two datasets.\n
+    1. Counts dataset has the raw counts obtained from mapping using a tool like kallisto. NB: rows=genes,
+     columns=sample. The first column should be the gene_ids.
     2. Metadata dataset contains information about the experiment design. The rows are the samples and you should have a
     column for every experiment information. E.g a column telling us which sample belongs to which treatment group.
-    Please see the example formats below""")
+    Please see the example formats below.
+    
+    Currently we support:\n
+    1. SingleFactor: Experiments with one factor influencing the counts.
+    2. MultiFactor: Experiments with more than one factor influencing the gene expression.""")
     example_counts = load_example_data(
         modality="raw_counts",
         dataset="synthetic",
@@ -26,7 +31,8 @@ with tab1:
         dataset="synthetic",
         debug=False,
     )
-    example_counts.reset_index(inplace=True, names='sample_id')
+    example_counts = example_counts.T
+    example_counts.reset_index(inplace=True, names='gene_id')
     example_metadata.reset_index(inplace=True, names='sample_id')
 
     st.write(example_counts.head(4))
@@ -37,7 +43,7 @@ with tab2:
     meta_data = st.sidebar.file_uploader(label="Load a file for metadata in CVS format")
     if counts_data is not None and meta_data is not None:
         counts_df, meta_df = load_data(counts_input=counts_data, meta_input=meta_data)
-        st.write('Please have a look at the first 5 rows of your dataset below and verify if they are loaded properly')
+        st.write('Please have a look at the first 5 rows of your dataset below and verify if they are loaded properly.')
         st.write('Here are your counts data')
         st.write(counts_df.head(5))
         st.write('Here are you meta data')
@@ -53,24 +59,24 @@ with tab3:
         st.write(pcs)
     with tab_pca2:
         col1, col2, col3 = st.columns(3)
-        color_scheme = st.sidebar.selectbox(label='select meta column to color plots',
+        color_scheme = st.sidebar.selectbox(label='select column to color PCA plots',
                                             options=[x for x in meta_df.columns if x != 'sample_id'])
 
         with col1:
             st.plotly_chart(px.scatter(pcs, x='PC1', y='PC2', color=color_scheme,
                                        title='PC1 vs PC2',
-                                       color_discrete_sequence=px.colors.qualitative.Dark24),
+                                       color_discrete_sequence=px.colors.qualitative.Dark24).update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)),
                             use_container_width=True)
         with col2:
             st.plotly_chart(px.scatter(pcs, x='PC3', y='PC4', color=color_scheme,
                                        title='PC3 vs PC4',
-                                       color_discrete_sequence=px.colors.qualitative.Dark24),
+                                       color_discrete_sequence=px.colors.qualitative.Dark24).update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)),
                             use_container_width=True)
         with col3:
-            st.plotly_chart(px.scatter(pcs, x='PC5', y='PC6', color=color_scheme,
-                                       title='PC5 vs PC6',
-                                       color_discrete_sequence=px.colors.qualitative.Dark24),
-                            use_container_width=True)
+            st.plotly_chart(
+                px.scatter(pcs, x='PC5', y='PC6', color=color_scheme, title='PC5 vs PC6',
+                           color_discrete_sequence=px.colors.qualitative.Dark24).update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)),
+                use_container_width=True)
 
 with tab4:
     tab_deg1, tab_deg2 = st.tabs(['Results', 'Plots'])
@@ -82,11 +88,23 @@ with tab4:
                                   design_factor=condition)
         levels = meta_df[condition].unique()
         with tab_deg1:
-            st.write(f'P_values computed based on: factor = {condition}: levels = {levels}')
+            st.write(f"""\n
+            P_values computed based on: factor = {condition}: levels = {levels}.\n
+            Results are sorted by log2 fold changes, then adjusted p_values.""")
             st.write(deg_results)
         with tab_deg2:
-            fig = px.scatter(deg_results, x='log2FoldChange', y='-log10(padj)', title='Volcano Plot')
-            st.plotly_chart(fig)
+            col1deg, col2deg = st.columns(2)
+            with col1deg:
+                fig = px.scatter(deg_results, x='log2FoldChange', y='-log10(pvalue)', title='Volcano Plot',
+                                 color='regulated',
+                                 color_discrete_sequence=['tomato', 'cornflowerblue', 'grey'])
+                st.plotly_chart(fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02,
+                                                              xanchor="right", x=1)),
+                                use_container_width=True)
+            with col2deg:
+                fig = px.pie(deg_results, values='baseMean', names='regulated',
+                             color_discrete_sequence=['grey', 'cornflowerblue', 'tomato'], hole=0.4)
+                st.plotly_chart(fig, use_container_width=True)
 
     else:
         conditions = st.sidebar.multiselect('Choose multiple factor columns',
@@ -100,12 +118,20 @@ with tab4:
                 deg_results = perform_deg(counts_data_df=counts_df, meta_data_df=meta_df,
                                           design_factor=conditions, levels=levels)
                 with tab_deg1:
-                    st.write(f'P_values computed based on: factor = {conditions[-1]}: levels = {levels}')
+                    st.write(f"""\n
+                    P_values computed based on: factor = {conditions[-1]}: levels = {levels}.\n
+                    Results are sorted by log2 fold changes, then adjusted p_values.""")
                     st.write(deg_results)
                 with tab_deg2:
-                    fig = px.scatter(deg_results, x='log2FoldChange', y='-log10(padj)', title='Volcano Plot')
-                    st.plotly_chart(fig)
-
-### TO DO
-# 1. Verify what is being done at the DEG and exactly which counts is expected. Does it need to be normalized or not
-# 2. Check the lagging problem
+                    col1deg, col2deg = st.columns(2)
+                    with col1deg:
+                        fig = px.scatter(deg_results, x='log2FoldChange', y='-log10(pvalue)', title='Volcano Plot',
+                                         color='regulated',
+                                         color_discrete_sequence=['tomato', 'cornflowerblue', 'grey'])
+                        st.plotly_chart(fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02,
+                                                                      xanchor="right", x=1)),
+                                        use_container_width=True)
+                    with col2deg:
+                        fig = px.pie(deg_results, values='baseMean', names='regulated',
+                                     color_discrete_sequence=['grey', 'cornflowerblue', 'tomato'], hole=0.4)
+                        st.plotly_chart(fig, use_container_width=True)
