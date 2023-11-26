@@ -164,7 +164,6 @@ with tab4:
                         sigs = deg_results[(deg_results.padj < 0.05) & (abs(deg_results.log2FoldChange > 2))]
                         dds.layers['log1p'] = np.log1p(dds.layers['normed_counts'])
                         dds_sigs = dds[:, sigs.index]
-                        st.write(dds_sigs.obs_names)
                         dds_sigs_df = pd.DataFrame(dds_sigs.layers['log1p'].T,
                                                    index=dds_sigs.var_names,
                                                    columns=dds_sigs.obs_names)
