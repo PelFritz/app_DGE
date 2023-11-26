@@ -23,14 +23,16 @@ def perform_pca(counts, meta):
 
 
 @st.cache_data
-def perform_deg(counts_data_df, meta_data_df, design_factor, analysis='SingleFactor', levels=''):
+def perform_deg(counts_data_df, meta_data_df, design_factor, contrast, analysis='SingleFactor'):
     # Filter for missing data
     counts_data_df = counts_data_df.T
     counts_data_df.reset_index(names='sample_id', inplace=True)
     data_full = meta_data_df.merge(counts_data_df, on='sample_id', how='inner')
     data_full.dropna(how='any', inplace=True)
-    counts_data_df = data_full.copy().drop(columns=meta_data_df.columns.tolist())
+    counts_data_df = data_full.copy().drop(columns=[x for x in meta_data_df.columns.tolist() if x != 'sample_id'])
+    counts_data_df.set_index('sample_id', inplace=True)
     meta_data_df = data_full[meta_data_df.columns.tolist()]
+    meta_data_df.set_index('sample_id', inplace=True)
 
     # Filter out very low expressed genes
     genes_to_keep = counts_data_df.columns[counts_data_df.sum(axis=0) >= 10]
@@ -47,13 +49,12 @@ def perform_deg(counts_data_df, meta_data_df, design_factor, analysis='SingleFac
     )
     dds.deseq2()
     if analysis == 'SingleFactor':
-        stat_res = DeseqStats(dds, inference=inference, quiet=True, cooks_filter=True, alpha=0.05)
+        stat_res = DeseqStats(dds, contrast=contrast, inference=inference, quiet=True, cooks_filter=True, alpha=0.05)
         stat_res.summary()
         results_df = stat_res.results_df
     else:
-        contrast = [design_factor[-1]]
-        contrast.extend(levels)
-        stat_res = DeseqStats(dds, contrast=contrast, inference=inference, quiet=True, cooks_filter=True, alpha=0.05)
+
+        stat_res = DeseqStats(dds, contrast=contrast, inference=inference, quiet=True, cooks_filter=True, alpha=0.05,)
         stat_res.summary()
         results_df = stat_res.results_df
     results_df['-log10(pvalue)'] = -np.log10(results_df['pvalue'])
@@ -62,7 +63,7 @@ def perform_deg(counts_data_df, meta_data_df, design_factor, analysis='SingleFac
     results_df['abslog2fc'] = np.abs(results_df['log2FoldChange'])
     results_df = results_df.sort_values(by=['abslog2fc', 'padj'], ascending=[False, True])
     results_df.drop(columns='abslog2fc', inplace=True)
-    return results_df
+    return results_df, dds
 
 
 @st.cache_data

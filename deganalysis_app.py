@@ -1,11 +1,14 @@
+import numpy as np
+import pandas as pd
 import streamlit as st
 from pydeseq2.utils import load_example_data
 import plotly.express as px
 from utils import load_data, perform_pca, perform_deg
+import seaborn as sns
 st.set_page_config(layout='wide')
 st.title(':red[Differential expression analysis Toolkit]')
 st.subheader('Perform differential gene expression without writing code.')
-tab1, tab2, tab3, tab4 = st.tabs(['Home', 'Load Data', 'PCA', 'DEG'])
+tab1, tab2, tab3, tab4 = st.tabs(['Home', 'Data', 'PCA', 'DEG'])
 
 
 with tab1:
@@ -16,6 +19,7 @@ with tab1:
     2. Metadata dataset contains information about the experiment design. The rows are the samples and you should have a
     column for every experiment information. E.g a column telling us which sample belongs to which treatment group.
     Please see the example formats below.
+    3. Column names should not have underscore "_" in them; e.g "heat_stress" should be "heat stress".
     
     Currently we support:\n
     1. SingleFactor: Experiments with one factor influencing the counts.
@@ -79,32 +83,47 @@ with tab3:
                 use_container_width=True)
 
 with tab4:
-    tab_deg1, tab_deg2 = st.tabs(['Results', 'Plots'])
+    tab_deg1, tab_deg2, tab_deg3 = st.tabs(['Results', 'Plots', 'Heatmap'])
     analysis_type = st.sidebar.selectbox('Analysis', options=['SingleFactor', 'MultiFactor'])
     if analysis_type == 'SingleFactor':
         condition = st.sidebar.selectbox('Choose factor column',
                                          options=[x for x in meta_df.columns if x != 'sample_id'])
-        deg_results = perform_deg(counts_data_df=counts_df, meta_data_df=meta_df,
-                                  design_factor=condition)
-        levels = meta_df[condition].unique()
-        with tab_deg1:
-            st.write(f"""\n
-            P_values computed based on: factor = {condition}: levels = {levels}.\n
-            Results are sorted by log2 fold changes, then adjusted p_values.""")
-            st.write(deg_results)
-        with tab_deg2:
-            col1deg, col2deg = st.columns(2)
-            with col1deg:
-                fig = px.scatter(deg_results, x='log2FoldChange', y='-log10(pvalue)', title='Volcano Plot',
-                                 color='regulated',
-                                 color_discrete_sequence=['tomato', 'cornflowerblue', 'grey'])
-                st.plotly_chart(fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02,
-                                                              xanchor="right", x=1)),
-                                use_container_width=True)
-            with col2deg:
-                fig = px.pie(deg_results, values='baseMean', names='regulated',
-                             color_discrete_sequence=['grey', 'cornflowerblue', 'tomato'], hole=0.4)
-                st.plotly_chart(fig, use_container_width=True)
+        levels = st.sidebar.multiselect('Choose contrast levels',
+                                        options=meta_df[condition].unique(), max_selections=2)
+        if condition and len(levels) == 2:
+            contrast = [condition]
+            contrast.extend(levels)
+            deg_results, dds = perform_deg(counts_data_df=counts_df, meta_data_df=meta_df,
+                                           design_factor=condition, contrast=contrast)
+            with tab_deg1:
+                st.write(f"""\n
+                P_values computed based on: factor = {condition}: levels = {levels}.\n
+                Results are sorted by log2 fold changes, then adjusted p_values.""")
+                st.write(deg_results)
+            with tab_deg2:
+                col1deg, col2deg = st.columns(2)
+                with col1deg:
+                    fig = px.scatter(deg_results, x='log2FoldChange', y='-log10(pvalue)', title='Volcano Plot',
+                                     color='regulated',
+                                     color_discrete_sequence=['tomato', 'cornflowerblue', 'grey'])
+                    st.plotly_chart(fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02,
+                                                                  xanchor="right", x=1)),
+                                    use_container_width=True)
+                with col2deg:
+                    fig = px.pie(deg_results, values='baseMean', names='regulated',
+                                 color_discrete_sequence=['grey', 'cornflowerblue', 'tomato'], hole=0.4)
+                    st.plotly_chart(fig, use_container_width=True)
+            with tab_deg3:
+                col_den1, _ = st.columns(2)
+                with col_den1:
+                    sigs = deg_results[(deg_results.padj < 0.05) & (abs(deg_results.log2FoldChange > 2))]
+                    dds.layers['log1p'] = np.log1p(dds.layers['normed_counts'])
+                    dds_sigs = dds[:, sigs.index]
+                    dds_sigs_df = pd.DataFrame(dds_sigs.layers['log1p'].T,
+                                               index=dds_sigs.var_names,
+                                               columns=dds_sigs.obs_names)
+                    fig = sns.clustermap(dds_sigs_df, z_score=0, cmap='RdYlBu_r', figsize=(6, 6))
+                    st.pyplot(fig, use_container_width=True)
 
     else:
         conditions = st.sidebar.multiselect('Choose multiple factor columns',
@@ -115,8 +134,10 @@ with tab4:
                                             options=meta_df[conditions[-1]].unique(),
                                             max_selections=2)
             if len(levels) == 2:
-                deg_results = perform_deg(counts_data_df=counts_df, meta_data_df=meta_df,
-                                          design_factor=conditions, levels=levels)
+                contrast = [conditions[-1]]
+                contrast.extend(levels)
+                deg_results, dds = perform_deg(counts_data_df=counts_df, meta_data_df=meta_df,
+                                               design_factor=conditions, contrast=contrast)
                 with tab_deg1:
                     st.write(f"""\n
                     P_values computed based on: factor = {conditions[-1]}: levels = {levels}.\n
@@ -131,7 +152,23 @@ with tab4:
                         st.plotly_chart(fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02,
                                                                       xanchor="right", x=1)),
                                         use_container_width=True)
-                    with col2deg:
-                        fig = px.pie(deg_results, values='baseMean', names='regulated',
-                                     color_discrete_sequence=['grey', 'cornflowerblue', 'tomato'], hole=0.4)
-                        st.plotly_chart(fig, use_container_width=True)
+                        with col2deg:
+                            fig2 = px.pie(deg_results, values='baseMean', names='regulated',
+                                          color_discrete_sequence=['grey', 'cornflowerblue', 'tomato'], hole=0.4,
+                                          title='Pie plot')
+                            st.plotly_chart(fig2, use_container_width=True)
+
+                with tab_deg3:
+                    col_den1, _ = st.columns(2)
+                    with col_den1:
+                        sigs = deg_results[(deg_results.padj < 0.05) & (abs(deg_results.log2FoldChange > 2))]
+                        dds.layers['log1p'] = np.log1p(dds.layers['normed_counts'])
+                        dds_sigs = dds[:, sigs.index]
+                        st.write(dds_sigs.obs_names)
+                        dds_sigs_df = pd.DataFrame(dds_sigs.layers['log1p'].T,
+                                                   index=dds_sigs.var_names,
+                                                   columns=dds_sigs.obs_names)
+                        fig = sns.clustermap(dds_sigs_df, z_score=0, cmap='RdYlBu_r', figsize=(6, 6))
+                        st.pyplot(fig, use_container_width=True)
+
+
