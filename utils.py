@@ -69,6 +69,6 @@ def perform_deg(counts_data_df, meta_data_df, design_factor, contrast, analysis=
 @st.cache_data
 def load_data(counts_input, meta_input):
     counts_df = pd.read_csv(counts_input, index_col=0)
-    counts_df = counts_df.round().astype('int')
+    counts_df = counts_df.round().astype('int32')
     meta_df = pd.read_csv(meta_input)
     return counts_df, meta_df
