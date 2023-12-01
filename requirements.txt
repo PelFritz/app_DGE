@@ -2,6 +2,7 @@ numpy==1.26.2
 pandas==2.1.3
 plotly==5.18.0
 pydeseq2==0.4.3
+rnanorm==2.1.0
 scikit_learn==1.3.2
 seaborn==0.13.0
 streamlit==1.28.2

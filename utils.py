@@ -6,11 +6,13 @@ from pydeseq2.dds import DeseqDataSet
 from pydeseq2.default_inference import DefaultInference
 from pydeseq2.ds import DeseqStats
 import streamlit as st
+from rnanorm import CPM
 
 
 @st.cache_data
 def perform_pca(counts, meta):
     counts = counts.T
+    counts = CPM().set_output(transform='pandas').fit_transform(counts)
     sample_id = counts.index.tolist()
     scaler = StandardScaler()
     x_std = scaler.fit_transform(counts)
