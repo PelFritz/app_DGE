@@ -111,7 +111,8 @@ with tab4:
                                     use_container_width=True)
                 with col2deg:
                     fig = px.pie(deg_results, values='baseMean', names='regulated',
-                                 color_discrete_sequence=['grey', 'cornflowerblue', 'tomato'], hole=0.4)
+                                 color_discrete_sequence=['grey', 'cornflowerblue', 'tomato'], hole=0.4,
+                                 title='Pie plot')
                     st.plotly_chart(fig, use_container_width=True)
             with tab_deg3:
                 col_den1, _ = st.columns(2)
@@ -169,5 +170,3 @@ with tab4:
                                                    columns=dds_sigs.obs_names)
                         fig = sns.clustermap(dds_sigs_df, z_score=0, cmap='RdYlBu_r', figsize=(6, 6))
                         st.pyplot(fig, use_container_width=True)
-
-
