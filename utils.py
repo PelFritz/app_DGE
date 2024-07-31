@@ -70,8 +70,14 @@ def perform_deg(counts_data_df, meta_data_df, design_factor, contrast, analysis=
 
 @st.cache_data
 def load_data(counts_input, meta_input):
-    counts_df = pd.read_csv(counts_input, index_col=0)
+    if counts_input:
+        counts_df = pd.read_csv(filepath_or_buffer=counts_input, index_col=0)
+    else:
+        counts_df = pd.read_csv(filepath_or_buffer="counts3.csv", index_col=0)
     counts_df = counts_df.round().astype('int32')
-    meta_df = pd.read_csv(meta_input)
+    if meta_input:
+        meta_df = pd.read_csv(meta_input)
+    else:
+        meta_df = pd.read_csv("metadata3.csv")
     return counts_df, meta_df
 

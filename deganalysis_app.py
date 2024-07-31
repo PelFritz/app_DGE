@@ -45,15 +45,13 @@ with tab1:
 with tab2:
     counts_data = st.sidebar.file_uploader(label="Load counts data in CSV format")
     meta_data = st.sidebar.file_uploader(label="Load a file for metadata in CSV format")
-    if counts_data is not None and meta_data is not None:
-        counts_df, meta_df = load_data(counts_input=counts_data, meta_input=meta_data)
-        st.write('Please have a look at the first 5 rows of your dataset below and verify if they are loaded properly.')
-        st.write('Here are your counts data.')
-        st.write(counts_df.head(5))
-        st.write('Here are you meta data.')
-        st.write(meta_df.head(5))
-    else:
-        st.stop()
+    counts_df, meta_df = load_data(counts_input=counts_data, meta_input=meta_data)
+    st.write('Please have a look at the first 5 rows of your dataset below and verify if they are loaded properly.')
+    st.write('Here are your counts data.')
+    st.write(counts_df.head(5))
+    st.write('Here are you meta data.')
+    st.write(meta_df.head(5))
+
 
 pcs = perform_pca(counts_df, meta_df)
 with tab3:

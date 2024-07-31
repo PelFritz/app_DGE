@@ -1,0 +1,33 @@
+sample_id,organism part,environmental stress,genotype
+SRR1767773,meristematic zone of primary root,control,wild type genotype
+SRR1767790,meristematic zone of primary root,control,wild type genotype
+SRR1767791,meristematic zone of primary root,control,wild type genotype
+SRR1767792,meristematic zone of primary root,control,wild type genotype
+SRR1767793,meristematic zone of primary root,"water deficit, -0.8MPa for 6 hours",wild type genotype
+SRR1767794,meristematic zone of primary root,"water deficit, -0.8MPa for 6 hours",wild type genotype
+SRR1767795,meristematic zone of primary root,"water deficit, -0.8MPa for 6 hours",wild type genotype
+SRR1767796,meristematic zone of primary root,"water deficit, -0.8MPa for 6 hours",wild type genotype
+SRR1770363,elongation zone of primary root,control,wild type genotype
+SRR1770365,elongation zone of primary root,control,wild type genotype
+SRR1770366,elongation zone of primary root,control,wild type genotype
+SRR1770367,elongation zone of primary root,control,wild type genotype
+SRR1770368,elongation zone of primary root,"water deficit, -0.8MPa for 6 hours",wild type genotype
+SRR1770369,elongation zone of primary root,"water deficit, -0.8MPa for 6 hours",wild type genotype
+SRR1770370,elongation zone of primary root,"water deficit, -0.8MPa for 6 hours",wild type genotype
+SRR1770371,elongation zone of primary root,"water deficit, -0.8MPa for 6 hours",wild type genotype
+SRR1770372,stele of primary root,control,wild type genotype
+SRR1770373,stele of primary root,control,wild type genotype
+SRR1770374,stele of primary root,control,wild type genotype
+SRR1770375,stele of primary root,control,wild type genotype
+SRR1770376,stele of primary root,"water deficit, -0.8MPa for 6 hours",wild type genotype
+SRR1770377,stele of primary root,"water deficit, -0.8MPa for 6 hours",wild type genotype
+SRR1770378,stele of primary root,"water deficit, -0.8MPa for 6 hours",wild type genotype
+SRR1770379,stele of primary root,"water deficit, -0.8MPa for 6 hours",wild type genotype
+SRR1770380,cortex of primary root,control,wild type genotype
+SRR1770381,cortex of primary root,control,wild type genotype
+SRR1770382,cortex of primary root,control,wild type genotype
+SRR1770383,cortex of primary root,control,wild type genotype
+SRR1770384,cortex of primary root,"water deficit, -0.8MPa for 6 hours",wild type genotype
+SRR1770385,cortex of primary root,"water deficit, -0.8MPa for 6 hours",wild type genotype
+SRR1770386,cortex of primary root,"water deficit, -0.8MPa for 6 hours",wild type genotype
+SRR1770387,cortex of primary root,"water deficit, -0.8MPa for 6 hours",wild type genotype
